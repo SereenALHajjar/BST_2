@@ -19,17 +19,7 @@ struct Node
 };
 class BST
 {
-public:
     Node *root;
-
-    BST()
-    {
-        root = nullptr;
-    }
-    void print_inorder()
-    {
-        print_inorder_imp(root);
-    }
     void print_inorder_imp(Node *cur_node)
     {
         if (cur_node == nullptr)
@@ -44,7 +34,6 @@ public:
         std::cout << std::endl;
         print_inorder_imp(cur_node->right);
     }
-
     int comparision(crefkey_t a, crefkey_t b)
     {
         size_t mn = std::min(a.size(), b.size());
@@ -61,11 +50,6 @@ public:
             return -1;
         return 0;
     }
-    void put(crefkey_t key, crefvalue_t value)
-    {
-        root = put_impl(root, key, value);
-    }
-
     Node *put_impl(Node *cur_node, crefkey_t key, crefvalue_t value)
     {
         if (cur_node == nullptr)
@@ -105,9 +89,23 @@ public:
         else
             return cur_node->value;
     }
+
+public:
+    BST()
+    {
+        root = nullptr;
+    }
+    void put(crefkey_t key, crefvalue_t value)
+    {
+        root = put_impl(root, key, value);
+    }
     value_t get(crefkey_t key)
     {
         return get_impl(root, key);
+    }
+    void print_inorder()
+    {
+        print_inorder_imp(root);
     }
 };
 int main()
