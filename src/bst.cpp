@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdint>
 #include <vector>
+#include <mutex>
 // using namespace std ;
 
 using key_t = std::vector<uint8_t>;
@@ -20,18 +21,18 @@ struct Node
 class BST
 {
     Node *root;
+    std::mutex mtx;
     void print_inorder_imp(Node *cur_node)
     {
         if (cur_node == nullptr)
             return;
+        std::cout<<std::endl ;
         for (auto x : cur_node->key)
             std::cout << int(x);
         std::cout << " ";
         for (auto x : cur_node->value)
             std::cout << int(x);
-        std::cout << std::endl;
         print_inorder_imp(cur_node->left);
-        std::cout << std::endl;
         print_inorder_imp(cur_node->right);
     }
     int comparision(crefkey_t a, crefkey_t b)
@@ -97,14 +98,17 @@ public:
     }
     void put(crefkey_t key, crefvalue_t value)
     {
+        std::lock_guard<std::mutex> lock(mtx);
         root = put_impl(root, key, value);
     }
     value_t get(crefkey_t key)
     {
+        std::lock_guard<std::mutex> lock(mtx);
         return get_impl(root, key);
     }
     void print_inorder()
     {
+        std::lock_guard<std::mutex> lock(mtx);
         print_inorder_imp(root);
     }
 };
