@@ -15,9 +15,9 @@ add_library(bst src/Bst.cpp)
 
 target_include_directories(bst PUBLIC src)
 
-# add_executable(bst_run main.cpp)
+add_executable(bst_run main.cpp)
 
-# target_link_libraries(bst_run PRIVATE bst)
+target_link_libraries(bst_run PRIVATE bst)
 
 
 add_subdirectory(tests)

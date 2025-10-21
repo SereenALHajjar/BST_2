@@ -1,145 +1,76 @@
-#include <iostream>
-#include <cstdint>
-#include <vector>
-#include <mutex>
-// using namespace std ;
+#include "bst.hpp"
 
-using key_t = std::vector<uint8_t>;
-using value_t = std::vector<uint8_t>;
+BST::BST() {
+    root = nullptr;
+}
 
-using crefkey_t = const key_t &;
-using crefvalue_t = const value_t &;
+void BST::put(crefkey_t key, crefvalue_t value) {
+    std::lock_guard<std::mutex> lock(mtx);
+    root = put_impl(root, key, value);
+}
 
-struct Node
-{
-    key_t key;
-    value_t value;
+value_t BST::get(crefkey_t key) {
+    std::lock_guard<std::mutex> lock(mtx);
+    return get_impl(root, key);
+}
 
-    Node *right;
-    Node *left;
-};
-class BST
-{
-    Node *root;
-    std::mutex mtx;
-    void print_inorder_imp(Node *cur_node)
-    {
-        if (cur_node == nullptr)
-            return;
-        std::cout<<std::endl ;
-        for (auto x : cur_node->key)
-            std::cout << int(x);
-        std::cout << " ";
-        for (auto x : cur_node->value)
-            std::cout << int(x);
-        print_inorder_imp(cur_node->left);
-        print_inorder_imp(cur_node->right);
+void BST::print_inorder() {
+    std::lock_guard<std::mutex> lock(mtx);
+    print_inorder_imp(root);
+}
+
+int BST::comparision(crefkey_t a, crefkey_t b) {
+    size_t mn = std::min(a.size(), b.size());
+    for (size_t i = 0; i < mn; i++) {
+        if (a[i] > b[i]) return 1;
+        else if (b[i] > a[i]) return -1;
     }
-    int comparision(crefkey_t a, crefkey_t b)
-    {
-        size_t mn = std::min(a.size(), b.size());
-        for (int i = 0; i < mn; i++)
-        {
-            if (a[i] > b[i])
-                return 1;
-            else if (b[i] > a[i])
-                return -1;
-        }
-        if (a.size() > b.size())
-            return 1;
-        if (b.size() > a.size())
-            return -1;
-        return 0;
-    }
-    Node *put_impl(Node *cur_node, crefkey_t key, crefvalue_t value)
-    {
-        if (cur_node == nullptr)
-        {
-            Node *new_node = new Node;
-            new_node->key = key;
-            new_node->value = value;
-            new_node->left = new_node->right = nullptr;
-            return new_node;
-        }
-
-        if (comparision(cur_node->key, key) == 1)
-        {
-            cur_node->left = put_impl(cur_node->left, key, value);
-        }
-        else if (comparision(cur_node->key, key) == -1)
-        {
-            cur_node->right = put_impl(cur_node->right, key, value);
-        }
-        else
-        {
-            cur_node->value = value;
-        }
-        return cur_node;
-    }
-    value_t get_impl(Node *cur_node, crefkey_t key)
-    {
-        if (cur_node == nullptr)
-        {
-            value_t not_found;
-            return not_found;
-        }
-        else if (comparision(cur_node->key, key) == 1)
-            return get_impl(cur_node->left, key);
-        else if (comparision(cur_node->key, key) == -1)
-            return get_impl(cur_node->right, key);
-        else
-            return cur_node->value;
-    }
-
-public:
-    BST()
-    {
-        root = nullptr;
-    }
-    void put(crefkey_t key, crefvalue_t value)
-    {
-        std::lock_guard<std::mutex> lock(mtx);
-        root = put_impl(root, key, value);
-    }
-    value_t get(crefkey_t key)
-    {
-        std::lock_guard<std::mutex> lock(mtx);
-        return get_impl(root, key);
-    }
-    void print_inorder()
-    {
-        std::lock_guard<std::mutex> lock(mtx);
-        print_inorder_imp(root);
-    }
-};
-int main()
-{
-
-    BST tree;
-
-    key_t key1 = {1, 2, 3};
-    value_t value1 = {10, 20};
-
-    key_t key2 = {4, 5, 6};
-    value_t value2 = {30, 40};
-
-    key_t key3 = {2, 3, 4};
-    value_t value3 = {50, 60};
-
-    tree.put(key1, value1);
-    tree.put(key2, value2);
-    tree.put(key3, value3);
-
-    std::cout << "Inorder traversal:\n";
-    tree.print_inorder();
-
-    key_t get_key = {4, 5, 6};
-    value_t result = tree.get(get_key);
-
-    std::cout << "\nGet value for key {4,5,6}: ";
-    for (auto b : result)
-        std::cout << (int)b << " ";
-    std::cout << std::endl;
-
+    if (a.size() > b.size()) return 1;
+    if (b.size() > a.size()) return -1;
     return 0;
+}
+
+Node* BST::put_impl(Node* cur_node, crefkey_t key, crefvalue_t value) {
+    if (cur_node == nullptr) {
+        Node* new_node = new Node;
+        new_node->key = key;
+        new_node->value = value;
+        new_node->left = new_node->right = nullptr;
+        return new_node;
+    }
+
+    if (comparision(cur_node->key, key) == 1) {
+        cur_node->left = put_impl(cur_node->left, key, value);
+    } else if (comparision(cur_node->key, key) == -1) {
+        cur_node->right = put_impl(cur_node->right, key, value);
+    } else {
+        cur_node->value = value;
+    }
+    return cur_node;
+}
+
+value_t BST::get_impl(Node* cur_node, crefkey_t key) {
+    if (cur_node == nullptr) {
+        value_t not_found;
+        return not_found;
+    } else if (comparision(cur_node->key, key) == 1) {
+        return get_impl(cur_node->left, key);
+    } else if (comparision(cur_node->key, key) == -1) {
+        return get_impl(cur_node->right, key);
+    } else {
+        return cur_node->value;
+    }
+}
+
+void BST::print_inorder_imp(Node* cur_node) {
+    if (cur_node == nullptr)
+        return;
+    std::cout << std::endl;
+    for (auto x : cur_node->key)
+        std::cout << x;
+    std::cout << " ";
+    for (auto x : cur_node->value)
+        std::cout << x;
+    print_inorder_imp(cur_node->left);
+    print_inorder_imp(cur_node->right);
 }
