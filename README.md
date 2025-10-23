@@ -42,5 +42,3 @@ Notes
 - BST is not balanced; for guaranteed O(log n) consider AVL/Red‑Black (can be added on a feature branch).
 - Changes are small and incremental (good to present in an interview): memory-safety (`unique_ptr`) and better read concurrency (`shared_mutex`).
 
-If you'd like, I can add a one-page "presenter's notes" or implement AVL balancing next on a feature branch.
-
