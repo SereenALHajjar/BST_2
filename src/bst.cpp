@@ -5,18 +5,18 @@ BST::BST() {
 }
 
 void BST::put(crefkey_t key, crefvalue_t value) {
-    std::lock_guard<std::mutex> lock(mtx);
-    root = put_impl(root, key, value);
+    std::unique_lock<std::shared_mutex> lock(mtx);
+    root = put_impl(std::move(root), key, value);
 }
 
 value_t BST::get(crefkey_t key) {
-    std::lock_guard<std::mutex> lock(mtx);
-    return get_impl(root, key);
+    std::shared_lock<std::shared_mutex> lock(mtx);
+    return get_impl(root.get(), key);
 }
 
 void BST::print_inorder() {
-    std::lock_guard<std::mutex> lock(mtx);
-    print_inorder_imp(root);
+    std::unique_lock<std::shared_mutex> lock(mtx);
+    print_inorder_imp(root.get());
 }
 
 int BST::comparision(crefkey_t a, crefkey_t b) {
@@ -30,19 +30,20 @@ int BST::comparision(crefkey_t a, crefkey_t b) {
     return 0;
 }
 
-Node* BST::put_impl(Node* cur_node, crefkey_t key, crefvalue_t value) {
-    if (cur_node == nullptr) {
-        Node* new_node = new Node;
+std::unique_ptr<Node> BST::put_impl(std::unique_ptr<Node> cur_node, crefkey_t key, crefvalue_t value) {
+    if (!cur_node) {
+        auto new_node = std::make_unique<Node>();
         new_node->key = key;
         new_node->value = value;
-        new_node->left = new_node->right = nullptr;
+        new_node->left = nullptr;
+        new_node->right = nullptr;
         return new_node;
     }
 
     if (comparision(cur_node->key, key) == 1) {
-        cur_node->left = put_impl(cur_node->left, key, value);
+        cur_node->left = put_impl(std::move(cur_node->left), key, value);
     } else if (comparision(cur_node->key, key) == -1) {
-        cur_node->right = put_impl(cur_node->right, key, value);
+        cur_node->right = put_impl(std::move(cur_node->right), key, value);
     } else {
         cur_node->value = value;
     }
@@ -54,9 +55,9 @@ value_t BST::get_impl(Node* cur_node, crefkey_t key) {
         value_t not_found;
         return not_found;
     } else if (comparision(cur_node->key, key) == 1) {
-        return get_impl(cur_node->left, key);
+        return get_impl(cur_node->left.get(), key);
     } else if (comparision(cur_node->key, key) == -1) {
-        return get_impl(cur_node->right, key);
+        return get_impl(cur_node->right.get(), key);
     } else {
         return cur_node->value;
     }
@@ -71,6 +72,6 @@ void BST::print_inorder_imp(Node* cur_node) {
     std::cout << " ";
     for (auto x : cur_node->value)
         std::cout << x;
-    print_inorder_imp(cur_node->left);
-    print_inorder_imp(cur_node->right);
+    print_inorder_imp(cur_node->left.get());
+    print_inorder_imp(cur_node->right.get());
 }

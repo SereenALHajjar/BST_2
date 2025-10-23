@@ -3,7 +3,8 @@
 #include <iostream>
 #include <cstdint>
 #include <vector>
-#include <mutex>
+#include <memory>
+#include <shared_mutex>
 
 // Type aliases
 using key_t = std::vector<uint8_t>;
@@ -16,19 +17,19 @@ using crefvalue_t = const value_t&;
 struct Node {
     key_t key;
     value_t value;
-    Node* left;
-    Node* right;
+    std::unique_ptr<Node> left;
+    std::unique_ptr<Node> right;
 };
 
 // Binary Search Tree (thread-safe)
 class BST {
 private:
-    Node* root;
-    std::mutex mtx;
+    std::unique_ptr<Node> root;
+    std::shared_mutex mtx;
 
     void print_inorder_imp(Node* cur_node);
     int comparision(crefkey_t a, crefkey_t b);
-    Node* put_impl(Node* cur_node, crefkey_t key, crefvalue_t value);
+    std::unique_ptr<Node> put_impl(std::unique_ptr<Node> cur_node, crefkey_t key, crefvalue_t value);
     value_t get_impl(Node* cur_node, crefkey_t key);
 
 public:
